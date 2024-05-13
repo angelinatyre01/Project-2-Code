@@ -1,0 +1,94 @@
+import json
+import tkinter as tk
+
+# Define the Note class
+class Note:
+    def __init__(self, title, text, tags):
+        self.title = title
+        self.text = text
+        self.tags = tags
+
+# The MainWindow class creates a custom GUI window based on the tkinter window (tk.Tk)
+class MainWindow(tk.Tk):
+    def __init__(self):
+        super().__init__()
+        self.geometry("800x600")  # Improvement 1: Make the window larger
+        self.title('Notebook')
+        self.notebook = []
+        self.notes = []
+
+        # Load notes from the saved file when the main window is initialized
+        self.load_from_json('python_notes.json')
+
+        # Improvement 7: Add search functionality for your notes
+        self.search_entry = tk.Entry(self)
+        self.search_entry.pack()
+        self.search_button = tk.Button(self, text="Search", command=self.search_notes)
+        self.search_button.pack()
+
+    # Method to load notes from a JSON file
+    def load_from_json(self, filename):
+        try:
+            with open(filename, 'r') as file:
+                data = json.load(file)
+                self.notes = data
+                # Update the representation of notes in the main window
+                self.update_note_representations()
+        except FileNotFoundError:
+            print("No existing notes file found.")
+        except json.JSONDecodeError:
+            print("Error decoding JSON data.")
+
+    # Method to update the representation of notes in the main window
+    def update_note_representations(self):
+        # Clear existing representations
+        for widget in self.winfo_children():
+            widget.destroy()
+        
+        # Create new representations for each note
+        for i, note in enumerate(self.notes):
+            # Create a label for the note title and add it to the main window
+            title_label = tk.Label(self, text=f"Note {i+1}: {note['title']}")
+            title_label.pack()
+
+            # Improvement 4: Improve the way the notes are displayed in the main window
+            # Add text widget to display the note text
+            text_widget = tk.Text(self, height=5, width=50)
+            text_widget.insert(tk.END, note['text'])
+            text_widget.pack()
+
+            # Create a button to view the full note and add it to the main window
+            view_button = tk.Button(self, text="View Note", command=lambda idx=i: self.view_note(idx))
+            view_button.pack()
+
+    # Method to view the full note when the corresponding button is clicked
+    def view_note(self, index):
+        note = self.notes[index]
+        # Create a new window to display the full note
+        view_window = tk.Toplevel(self)
+        view_window.title(f"Note: {note['title']}")
+        # Create labels to display the title, text, and tags of the note
+        title_label = tk.Label(view_window, text=f"Title: {note['title']}")
+        title_label.pack()
+        text_label = tk.Label(view_window, text=f"Text: {note['text']}")
+        text_label.pack()
+        tags_label = tk.Label(view_window, text=f"Tags: {', '.join(note['tags'])}")
+        tags_label.pack()
+
+    # Improvement 7: Add search functionality for your notes
+    def search_notes(self):
+        search_text = self.search_entry.get().lower()
+        matching_notes = [note for note in self.notes if search_text in note['text'].lower()]
+        if matching_notes:
+            print("Matching notes found:")
+            for note in matching_notes:
+                print(f"Title: {note['title']}")
+                print(f"Text: {note['text']}")
+                print(f"Tags: {', '.join(note['tags'])}")
+        else:
+            print("No matching notes found.")
+
+# main execution
+if __name__ == '__main__':
+    main_window = MainWindow()
+    main_window.mainloop()
